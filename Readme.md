@@ -1,4 +1,4 @@
-# MicroLens 1M — Pipeline Task1 & Task2 (CLIP + DIN)
+# MicroLens 1M: Pipeline Task1 & Task2 (CLIP + DIN)
 
 Ce projet implémente une pipeline complète pour la compétition MicroLens_1M_MMCTR (Task1 & Task2) :
 
@@ -13,36 +13,36 @@ Ce projet implémente une pipeline complète pour la compétition MicroLens_1M_M
 
 Le dossier `BASE_PATH` (par exemple sur Google Drive) doit contenir :
 
-- `item_feature.parquet` — contient `item_id` et `item_title` (utilisé pour l'encodage texte CLIP)
-- `item_images_2.rar` — archive d'images nommées `<item_id>.jpg`
-- `MicroLens_1M_x1/` — dossier dataset contenant :
+- `item_feature.parquet`: contient `item_id` et `item_title` (utilisé pour l'encodage texte CLIP)
+- `item_images_2.rar`: archive d'images nommées `<item_id>.jpg`
+- `MicroLens_1M_x1/`: dossier dataset contenant :
 	- `train.parquet`
 	- `valid.parquet`
 	- `test.parquet`
 
 Le pipeline produit ensuite :
 
-- `item_emb_task1_clip.parquet` — embeddings 128D (CLIP + PCA)
-- `models_task1and2/task1and2_best.pt` — meilleur modèle DIN sauvegardé
+- `item_emb_task1_clip.parquet`: embeddings 128D (CLIP + PCA)
+- `models_task1and2/task1and2_best.pt`: meilleur modèle DIN sauvegardé
 - `predictions_task1and2/prediction.csv` et `predictions_task1and2/prediction.zip`
 
 ---
 
 ## Étapes de la pipeline
 
-### Étape 0 — Installation & environnement
+### Étape 0: Installation & environnement
 
 Objectif : installer les dépendances requises et monter le Drive (si utilisé dans Colab).
 
 Actions typiques : installation de `clip` (OpenAI), `polars` (lecture Parquet rapide), montage de `/content/drive`.
 
-### Étape 1 — Extraction des images
+### Étape 1: Extraction des images
 
 Objectif : rendre les images disponibles localement.
 
 Action : extraire `item_images_2.rar` dans un dossier (p.ex. `/content/item_images/`). Les images doivent être nommées `<item_id>.jpg`. Si le dossier existe déjà, on ignore cette étape.
 
-### Étape 2 — Génération des embeddings (CLIP)
+### Étape 2: Génération des embeddings (CLIP)
 
 Objectif : créer un embedding multimodal par item (texte + image).
 
@@ -56,7 +56,7 @@ Processus :
 
 Résultat : matrice d'embeddings CLIP (dimension native, p.ex. 512)
 
-### Étape 3 — Réduction dimensionnelle (PCA 512→128)
+### Étape 3: Réduction dimensionnelle (PCA 512→128)
 
 Objectif : produire des embeddings finaux de dimension 128 (exigence de la compétition).
 
@@ -67,7 +67,7 @@ Actions : appliquer une PCA (`n_components=128`), afficher la variance expliqué
 
 Cette étape est ignorée si le fichier existe déjà.
 
-### Étape 4 — Construction de la matrice d'embeddings pour DIN
+### Étape 4: Construction de la matrice d'embeddings pour DIN
 
 Objectif : créer des poids d'embedding PyTorch avec un index de padding.
 
@@ -79,14 +79,14 @@ Actions :
 
 Résultats : `PRETRAINED_WEIGHTS`, `ID_MAP`
 
-### Étape 5 — Préparation du dataset CTR
+### Étape 5: Préparation du dataset CTR
 
 Objectif : préparer les entrées pour le modèle DIN à partir de `train.parquet`, `valid.parquet`, `test.parquet`.
 
 Champs utilisés :
 
-- `item_id` — item cible
-- `item_seq` — séquence historique d'items consultés
+- `item_id`: item cible
+- `item_seq`: séquence historique d'items consultés
 - `likes_level` (0..19)
 - `views_level` (0..19)
 - `label` (train/valid uniquement)
@@ -94,7 +94,7 @@ Champs utilisés :
 
 Tous les `item_id` (cible et séquence) sont mappés via `ID_MAP`. Les ids inconnus deviennent `0` (padding).
 
-### Étape 6 — Modèle DIN (Deep Interest Network)
+### Étape 6: Modèle DIN (Deep Interest Network)
 
 Entrées : `history` (séquence d'items), `target` (item candidat), `likes_level`, `views_level`.
 
@@ -108,7 +108,7 @@ Architecture principale :
 
 Sortie : logit (avant sigmoid)
 
-### Étape 7 — Entraînement
+### Étape 7: Entraînement
 
 Objectif : optimiser la classification CTR avec `BCEWithLogitsLoss`.
 
@@ -123,7 +123,7 @@ Paramètres usuels :
 
 Le meilleur modèle est sauvegardé dans : `models_task1and2/task1and2_best.pt`
 
-### Étape 8 — Prédiction et soumission (Task1 & Task2)
+### Étape 8: Prédiction et soumission (Task1 & Task2)
 
 Objectif : générer une archive `prediction.zip` compatible Codabench.
 
